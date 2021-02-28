@@ -14,6 +14,7 @@
 // more in depth in the coming lectures.
 extern crate rand;
 use rand::Rng;
+use std::collections::HashSet;
 use std::fs;
 use std::io;
 use std::io::Write;
@@ -27,6 +28,81 @@ fn pick_a_random_word() -> String {
     String::from(words[rand::thread_rng().gen_range(0, words.len())].trim())
 }
 
+struct HangmanState {
+    word_to_guess_chars: Vec<char>,
+    num_guesses: u32,
+    letters_guessed: HashSet<char>,
+}
+
+impl HangmanState {
+    fn new(
+        word_to_guess_chars: Vec<char>,
+        num_guesses: u32,
+        letters_guessed: HashSet<char>,
+    ) -> HangmanState {
+        HangmanState {
+            word_to_guess_chars,
+            num_guesses,
+            letters_guessed,
+        }
+    }
+
+    fn print_state(&self) {
+        println!("====================================================================");
+        println!("The word so far is: {:?}", self.get_word_with_blanks());
+        println!(
+            "You have guessed the following letters: {:?}",
+            self.letters_guessed
+        );
+        println!(
+            "You have {} guesses remaining",
+            (NUM_INCORRECT_GUESSES - self.num_guesses)
+        );
+        println!("====================================================================");
+    }
+
+    fn get_word_with_blanks(&self) -> String {
+        let mut indices_to_blank: Vec<usize> = Vec::new();
+        for (index, c) in self.word_to_guess_chars.iter().enumerate() {
+            if !self.letters_guessed.contains(c) {
+                indices_to_blank.push(index)
+            }
+        }
+        let mut word_with_blanks: Vec<char> = self.word_to_guess_chars.to_vec();
+
+        for index in indices_to_blank.iter_mut() {
+            word_with_blanks[*index] = '-';
+        }
+        word_with_blanks.iter().collect()
+    }
+
+    fn increment_num_guesses(&mut self) {
+        self.num_guesses += 1;
+    }
+
+    fn add_guess(&mut self, guess: char) {
+        self.letters_guessed.insert(guess);
+        if !self.word_to_guess_chars.contains(&guess) {
+            self.increment_num_guesses();
+        }
+    }
+}
+
+fn get_char_guess() -> Option<char> {
+    print!("Please guess a letter: ");
+    io::stdout().flush().expect("Error flushing stdout.");
+    let mut guess = String::new();
+    io::stdin()
+        .read_line(&mut guess)
+        .expect("Error reading line.");
+
+    if guess.trim().len() == 1 {
+        guess.chars().nth(0)
+    } else {
+        None
+    }
+}
+
 fn main() {
     let secret_word = pick_a_random_word();
     // Note: given what you know about Rust so far, it's easier to pull characters out of a
@@ -36,5 +112,29 @@ fn main() {
     // Uncomment for debugging:
     // println!("random word: {}", secret_word);
 
-    // Your code here! :)
+    // Your code here! :){
+
+    let mut state: HangmanState = HangmanState::new(secret_word_chars, 0, HashSet::new());
+    state.print_state();
+
+    loop {
+        let guess = get_char_guess();
+        match guess {
+            Some(c) => state.add_guess(c),
+            None => println!("You can only guess 1 letter at a time"),
+        };
+
+        println!("guess: {}", guess.unwrap());
+        state.print_state();
+
+        if state.num_guesses >= NUM_INCORRECT_GUESSES {
+            println!("You have run out of guesses!");
+            break;
+        }
+
+        if state.get_word_with_blanks() == secret_word {
+            println!("That's right!");
+            break;
+        }
+    }
 }
