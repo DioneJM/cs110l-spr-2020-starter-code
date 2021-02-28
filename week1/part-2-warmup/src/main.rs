@@ -61,6 +61,7 @@ mod test {
         assert_eq!(v, vec![3, 1, 0, 4]);
     }
 
+    #[test]
     fn test_dedup_simplified() {
         let mut v = vec![3, 1, 0, 1, 4, 4];
         dedup_simplified(&mut v);
