@@ -28,7 +28,7 @@ fn dedup(v: &mut Vec<i32>) {
     }
 
     for (cur_index, index_to_remove) in indices_to_remove.iter().enumerate() {
-        v.remove(*index_to_remove - cur_index);
+        v.remove(*index_to_remove - cur_index); // this is too hacky, gotta find a better way
     }
 }
 
@@ -58,6 +58,12 @@ mod test {
     fn test_dedup() {
         let mut v = vec![3, 1, 0, 1, 4, 4];
         dedup(&mut v);
+        assert_eq!(v, vec![3, 1, 0, 4]);
+    }
+
+    fn test_dedup_simplified() {
+        let mut v = vec![3, 1, 0, 1, 4, 4];
+        dedup_simplified(&mut v);
         assert_eq!(v, vec![3, 1, 0, 4]);
     }
 }
